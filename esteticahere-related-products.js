@@ -146,3 +146,47 @@ const s=document.createElement('style');s.id='est-related-v2-css';s.textContent=
 function start(){addCSS();load(false);queue();new MutationObserver(queue).observe(document.body,{childList:true,subtree:true});window.addEventListener('popstate',queue);window.addEventListener('hashchange',queue);}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
+
+(function(){
+if(window.__estRelatedPositioner)return;
+window.__estRelatedPositioner=true;
+function reposition(){
+document.querySelectorAll('.t-store__prod-popup__info').forEach(function(info){
+const block=info.querySelector('.est-related-v2');
+if(!block||block.querySelectorAll('.est-related-v2__item').length<2)return;
+const option=Array.from(info.querySelectorAll('.t-product__option')).find(function(el){
+const title=el.querySelector('.t-product__option-title');
+return title&&/^цвет(?:\s|:|$)/i.test(title.textContent.trim());
+});
+if(!option)return;
+const title=option.querySelector('.t-product__option-title');
+if(block.parentElement!==option)option.appendChild(block);
+option.classList.add('est-related-color-ready');
+Array.from(option.children).forEach(function(child){
+if(child===block||child===title||child.contains(title))return;
+child.classList.add('est-related-hide-native');
+});
+option.querySelectorAll('select,.t-product__option-select').forEach(function(el){
+el.classList.add('est-related-hide-native');
+});
+});
+}
+let queued=false;
+function schedule(){
+if(queued)return;
+queued=true;
+requestAnimationFrame(function(){
+queued=false;
+reposition();
+});
+}
+function init(){
+const style=document.createElement('style');
+style.textContent='.est-related-color-ready .est-related-hide-native{display:none!important}.est-related-color-ready .est-related-v2{margin:10px 0 22px!important}.est-related-color-ready .est-related-v2__heading{display:none!important}';
+document.head.appendChild(style);
+schedule();
+new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true});
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);
+else init();
+})();
